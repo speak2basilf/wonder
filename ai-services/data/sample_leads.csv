@@ -1,0 +1,6 @@
+id,source,expected_value,converted
+1,web,5000,1
+2,referral,2000,0
+3,event,15000,1
+4,web,8000,1
+5,ads,3000,0

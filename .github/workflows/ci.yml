@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Backend install
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+          npm test --silent
+      - name: Frontend install
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Lint backend
+        working-directory: backend
+        run: npm run lint
+  docker:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t ghcr.io/${{ github.repository }}/backend:sha-${{ github.sha }} backend
+      - name: Build ai services
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/ai-lead-scoring:sha-${{ github.sha }} ai-services/lead_scoring
+          docker build -t ghcr.io/${{ github.repository }}/ai-sentiment:sha-${{ github.sha }} ai-services/sentiment
+          docker build -t ghcr.io/${{ github.repository }}/ai-predictive:sha-${{ github.sha }} ai-services/predictive
+          docker build -t ghcr.io/${{ github.repository }}/ai-nlp:sha-${{ github.sha }} ai-services/nlp
+          docker build -t ghcr.io/${{ github.repository }}/ai-personalization:sha-${{ github.sha }} ai-services/personalization
+      - name: Build frontend image
+        run: docker build -t ghcr.io/${{ github.repository }}/frontend:sha-${{ github.sha }} frontend

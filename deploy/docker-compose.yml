@@ -1,0 +1,86 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cliniglobal
+      POSTGRES_USER: cliniglobal
+      POSTGRES_PASSWORD: cliniglobal_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql:ro
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ../backend
+    env_file:
+      - ../.env.example
+    environment:
+      NODE_ENV: development
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+
+  ai-lead-scoring:
+    build: ../ai-services/lead_scoring
+    env_file:
+      - ../.env.example
+    ports:
+      - "9001:9001"
+
+  ai-sentiment:
+    build: ../ai-services/sentiment
+    env_file:
+      - ../.env.example
+    ports:
+      - "9002:9002"
+
+  ai-predictive:
+    build: ../ai-services/predictive
+    env_file:
+      - ../.env.example
+    ports:
+      - "9003:9003"
+
+  ai-nlp:
+    build: ../ai-services/nlp
+    env_file:
+      - ../.env.example
+    ports:
+      - "9004:9004"
+
+  ai-personalization:
+    build: ../ai-services/personalization
+    env_file:
+      - ../.env.example
+    ports:
+      - "9005:9005"
+
+  ai-asr:
+    build: ../ai-services/asr
+    env_file:
+      - ../.env.example
+    ports:
+      - "9006:9006"
+
+  frontend:
+    build: ../frontend
+    env_file:
+      - ../.env.example
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
